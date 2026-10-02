@@ -1,0 +1,20 @@
+[
+  {
+    "versions": [
+      {
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://github.com/jasonrwells83/jellyfin-series-activity/releases/download/v1.0.0/SeriesActivity-1.0.0-Jellyfin-12.1.zip",
+        "timestamp": "2026-10-02T00:00:00Z",
+        "changelog": "Initial release for Jellyfin 12.1.",
+        "checksum": "34fea87d7993321a4887c0f68fc186b3",
+        "version": "1.0.0.0"
+      }
+    ],
+    "overview": "See which TV series people watch and which have gone quiet.",
+    "description": "Administrator-only series activity report with playback history, inactivity filters, Keep marks, and CSV export.",
+    "category": "General",
+    "owner": "jasonrwells83",
+    "name": "Series Activity",
+    "guid": "a40f58ee-e271-4778-b187-662705f9ef26"
+  }
+]
