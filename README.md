@@ -6,14 +6,14 @@ Features: library and status filters, custom inactivity cutoff (default 90 days)
 
 ## Install through Jellyfin's plugin page
 
-The provided local repository runs on your Windows PC. Keep it on the same network as Unraid until installation finishes. Node.js is required on the PC (already available on the build PC).
+Add this repository URL in Jellyfin: `https://raw.githubusercontent.com/jasonrwells83/jellyfin-series-activity/main/manifest.json`.
 
-1. Run `Start-Series-Activity-Repository.cmd` from the extracted outputs folder if the repository is not already running. It prints a repository URL. Keep the ZIP beside the script.
-2. In Jellyfin, go to **Dashboard → Plugins → Manage Repositories**, add a repository named **Series Activity**, and paste that URL.
-3. Return to Plugins, choose **Available** or **All**, find **Series Activity**, and install version **1.0.0.0**.
-4. Restart Jellyfin when convenient. Open **Plugins → Series Activity → Settings**.
+1. In Jellyfin, go to **Dashboard → Plugins → Manage Repositories**, add a repository named **Series Activity**, and paste that URL.
+2. Return to Plugins, choose **Available** or **All**, find **Series Activity**, and install version **1.0.1.0** once it is published. Existing installations can update through the same repository.
+3. Restart Jellyfin when convenient and reload the browser page.
+4. Open **Dashboard → Series Activity** directly from the left sidebar, under the **Plugins** heading.
 
-The repository is local, not publicly hosted, and must be reachable from Unraid. It serves only the manifest and plugin ZIP. No firewall rules are changed by the script. After installation, the plugin operates without the repository server. Removing the repository entry will avoid catalog refresh errors when the PC/server is off; this does not uninstall the plugin. The plugin does not download automatic updates from any public repository.
+Version 1.0.1 adds the dashboard sidebar shortcut with a TV icon. The existing plugin Settings entry still works. Activity history and Keep marks use the same storage and do not need migration.
 
 ## Manual alternative
 
@@ -54,7 +54,7 @@ The only required installed binary is `Jellyfin.Plugin.SeriesActivity.dll`. Pack
 
 ## Verification
 
-See `VALIDATION.md` in the deliverables for test scope and limitations. The included rule tests are dependency-free. Verification was conducted against the official Jellyfin 12.1 Docker image using synthetic media and accounts, not the user's Unraid server.
+The original activity logic was checked with rule tests and local Jellyfin integration tests. Version 1.0.1 changes only dashboard page registration and assembly version. Verification uses the official Jellyfin 12.1 Docker image with synthetic media and accounts, not the user's Unraid server.
 
 ## License and references
 

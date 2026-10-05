@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Series Activity</title></head>
+<body>
+<div id="seriesActivityPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-button,emby-input,emby-select,emby-checkbox">
+<style>
+#seriesActivityPage .sa-wrap{max-width:1400px;margin:auto;padding:1.5em 1em 4em}
+#seriesActivityPage .sa-head{display:flex;align-items:center;justify-content:space-between;gap:1em;flex-wrap:wrap}
+#seriesActivityPage h1{font-size:1.8em;margin:.25em 0}
+#seriesActivityPage .sa-muted{opacity:.7;font-size:.9em;line-height:1.6}
+#seriesActivityPage .sa-controls{display:flex;align-items:end;gap:1em;flex-wrap:wrap;margin:1.6em 0}
+#seriesActivityPage .sa-controls label{display:flex;flex-direction:column;gap:.5em;font-size:.9em;flex:1;min-width:140px}
+#seriesActivityPage .sa-controls input,#seriesActivityPage .sa-controls select{box-sizing:border-box;padding:.7em;border-radius:4px;border:1px solid #777;background:var(--input-background,#292929);color:inherit;font:inherit;min-height:42px;width:100%}
+#seriesActivityPage option{background:#292929;color:#fff}
+#seriesActivityPage button{cursor:pointer}
+#seriesActivityPage .sa-summary{padding:1em 0;border-top:1px solid #555;border-bottom:1px solid #555;margin-bottom:1em;line-height:1.8}
+#seriesActivityPage .sa-table-wrap{overflow-x:auto}
+#seriesActivityPage table{width:100%;border-collapse:collapse;text-align:left}
+#seriesActivityPage th{font-weight:500;font-size:.85em;opacity:.7;white-space:nowrap}
+#seriesActivityPage th,#seriesActivityPage td{padding:1em .65em;border-bottom:1px solid #444;vertical-align:top}
+#seriesActivityPage td:first-child{min-width:220px}
+#seriesActivityPage .sa-name{font-size:1.05em;font-weight:600;margin-bottom:.3em}
+#seriesActivityPage .sa-status{white-space:nowrap;font-size:.85em;border:1px solid #777;border-radius:4px;padding:.3em .5em;display:inline-block}
+#seriesActivityPage .sa-status.active{color:#93dfc3;border-color:#36725d}
+#seriesActivityPage .sa-status.stagnant{color:#ffd28e;border-color:#816031}
+#seriesActivityPage details{margin-top:.65em;font-size:.9em}
+#seriesActivityPage summary{cursor:pointer;color:#77cbed}
+#seriesActivityPage .sa-path{overflow-wrap:anywhere;margin-top:.6em;max-width:36em}
+#seriesActivityPage .sa-viewer{padding:.45em 0;line-height:1.5}
+#seriesActivityPage .sa-alert{padding:1em;background:#593923;border-radius:4px;margin:1em 0;line-height:1.5}
+#seriesActivityPage .sa-empty{padding:3em 1em;text-align:center;line-height:1.7}
+#seriesActivityPage input[type=checkbox]{width:20px;height:20px;cursor:pointer;accent-color:#00a4dc}
+#seriesActivityPage .sa-actions{display:flex;gap:.5em}
+#seriesActivityPage .sa-help{margin-top:1.5em;max-width:80em;line-height:1.6}
+@media(max-width:650px){#seriesActivityPage .sa-controls label{flex-basis:40%}#seriesActivityPage .sa-wrap{padding:1em .6em}#seriesActivityPage th,#seriesActivityPage td{padding:.8em .4em}#seriesActivityPage .sa-actions{width:100%}}
+</style>
+<div data-role="content"><div class="content-primary sa-wrap">
+  <div class="sa-head"><div><h1>Series Activity</h1><div class="sa-muted">Your TV library, one series at a time.</div></div>
+    <div class="sa-actions"><button is="emby-button" class="raised" id="saExport" type="button">Export CSV</button><button is="emby-button" class="raised button-submit" id="saRefresh" type="button">Refresh library</button></div>
+  </div>
+  <div id="saError" class="sa-alert" role="alert" hidden></div>
+  <div class="sa-controls">
+    <label>Library<select id="saLibrary"><option value="">All TV libraries</option></select></label>
+    <label>Show<select id="saStatus"><option value="">All series</option><option>Stagnant</option><option>Active</option><option>No recorded activity</option><option>New / observing</option><option value="keep">Marked Keep</option></select></label>
+    <label>Inactive for (days)<input id="saDays" type="number" min="1" max="3650" value="90"></label>
+    <label>Observe new shows (days)<input id="saGrace" type="number" min="0" max="3650" value="14"></label>
+    <label>Sort by<select id="saSort"><option value="oldest">Oldest activity first</option><option value="size">Largest first</option><option value="name">Series name</option><option value="recent">Most recent activity</option></select></label>
+    <label>Search<input id="saSearch" type="search" placeholder="Series name"></label>
+  </div>
+  <div id="saSummary" class="sa-summary" aria-live="polite">Loading series…</div>
+  <div class="sa-table-wrap"><table><thead><tr><th scope="col">Series</th><th scope="col">Last activity</th><th scope="col">Recent viewers</th><th scope="col">Episode size*</th><th scope="col">Status</th><th scope="col">Keep</th></tr></thead><tbody id="saRows"></tbody></table></div>
+  <div id="saEmpty" class="sa-empty" hidden></div>
+  <div class="sa-help sa-muted">
+    <p>Activity is combined across every episode and user. “Recent viewers” means users with activity within your selected inactivity window. Open “Viewer details” to see who watched and when. Keep marks a series you intend to retain; it is excluded from the stagnant size total.</p>
+    <p>New playback counts after 60 seconds of non-paused client reports. Earlier Jellyfin last-played dates are imported as “Existing Jellyfin history”; those dates can also reflect manual watched changes. Missing history means no recorded activity, not proof that a show was never watched. Observation starts when this plugin first sees a series.</p>
+    <p>*Size sums the episode file sizes known to Jellyfin. It excludes sidecar files and can omit alternate versions or extra parts. “Partial” means some sizes are missing. This is an estimate, not an exact folder total.</p>
+    <div id="saFoot"></div>
+  </div>
+</div></div>
+<script>
+(function(){
+  'use strict';
+  var page=document.querySelector('#seriesActivityPage'), data=null, timer=null, active=false, serial=0, savedLibrary=null;
+  function $(id){return page.querySelector('#'+id);}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function date(v){return v?new Date(v).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}):'No recorded activity';}
+  function size(n){if(!n)return '0 B';var units=['B','KiB','MiB','GiB','TiB'], i=Math.min(4,Math.floor(Math.log(n)/Math.log(1024)));return (n/Math.pow(1024,i)).toFixed(i>1?1:0)+' '+units[i];}
+  function error(message){$('saError').textContent=message||'';$('saError').hidden=!message;}
+  function options(){var days=Number($('saDays').value),grace=Number($('saGrace').value);if(!Number.isInteger(days)||days<1||days>3650||!Number.isInteger(grace)||grace<0||grace>3650)throw Error('Enter 1–3650 inactivity days and 0–3650 observation days.');return {inactiveDays:days,graceDays:grace};}
+  function api(path,method,body){return ApiClient.ajax({type:method||'GET',url:ApiClient.getUrl('SeriesActivity/'+path),dataType:method?'text':'json',contentType:'application/json',data:body===undefined?undefined:JSON.stringify(body)});}
+  function saveFilters(){try{localStorage.setItem('seriesActivity.filters',JSON.stringify(['saLibrary','saStatus','saDays','saGrace','saSort','saSearch'].reduce(function(o,k){o[k]=$(k).value;return o;},{})));}catch(e){}}
+  function filtered(){if(!data)return [];var library=$('saLibrary').value,status=$('saStatus').value,q=$('saSearch').value.toLowerCase(),sort=$('saSort').value;return data.Series.filter(function(s){return (!library||s.LibraryId===library)&&(!status||(status==='keep'?s.Keep:s.Status===status))&&s.Name.toLowerCase().includes(q);}).sort(function(a,b){if(sort==='size')return b.KnownBytes-a.KnownBytes||a.Name.localeCompare(b.Name);if(sort==='name')return a.Name.localeCompare(b.Name);var av=a.LastActivityUtc?Date.parse(a.LastActivityUtc):0,bv=b.LastActivityUtc?Date.parse(b.LastActivityUtc):0;return (sort==='recent'?bv-av:av-bv)||a.Name.localeCompare(b.Name);});}
+  function render(){if(!data)return;var expanded=Array.from($('saRows').querySelectorAll('tr')).filter(function(tr){return tr.querySelector('details').open;}).map(function(tr){return tr.querySelector('[data-keep]').getAttribute('data-keep');});var rows=filtered(),opt=options(),cutoff=Date.now()-opt.inactiveDays*86400000,stagnant=rows.filter(function(s){return s.Status==='Stagnant'&&!s.Keep;});
+    $('saSummary').textContent=rows.length+' series shown · '+rows.filter(function(s){return s.Status==='Active';}).length+' active · '+stagnant.length+' stagnant without Keep · '+size(stagnant.reduce(function(n,s){return n+s.KnownBytes;},0))+' known episode size';
+    $('saRows').innerHTML=rows.map(function(s){var recent=s.Viewers.filter(function(v){return Date.parse(v.LastActivityUtc)>=cutoff;});return '<tr><td><div class="sa-name">'+esc(s.Name)+'</div><div class="sa-muted">'+esc(s.Library)+' · '+s.Episodes+' episodes</div><details><summary>Viewer details'+(s.Viewers.length?' ('+s.Viewers.length+')':'')+'</summary>'+(s.Viewers.length?s.Viewers.map(function(v){return '<div class="sa-viewer"><strong>'+esc(v.Name)+'</strong> · '+esc(date(v.LastActivityUtc))+'<br>'+esc(v.Episode)+'<br><span class="sa-muted">'+esc(v.Evidence)+'</span></div>';}).join(''):'<p>No recorded playback for current users.</p>')+'<div class="sa-path sa-muted">'+esc(s.Path)+'</div></details></td><td>'+esc(date(s.LastActivityUtc))+(s.DaysInactive!=null?'<div class="sa-muted">'+s.DaysInactive+' days ago</div>':'')+'</td><td>'+recent.length+'<div class="sa-muted">'+recent.map(function(v){return esc(v.Name);}).join(', ')+'</div></td><td>'+size(s.KnownBytes)+(s.UnknownSizes?'<div class="sa-muted">Partial · '+s.UnknownSizes+' unknown</div>':'')+'</td><td><span class="sa-status '+(s.Status==='Active'?'active':s.Status==='Stagnant'?'stagnant':'')+'">'+esc(s.Status)+'</span></td><td><input type="checkbox" data-keep="'+esc(s.Id)+'" aria-label="Keep '+esc(s.Name)+'" '+(s.Keep?'checked':'')+'></td></tr>';}).join('');
+    Array.from($('saRows').querySelectorAll('tr')).forEach(function(tr){if(expanded.includes(tr.querySelector('[data-keep]').getAttribute('data-keep')))tr.querySelector('details').open=true;});
+    $('saEmpty').hidden=rows.length>0;$('saEmpty').textContent=data.Scanning?'Scanning your TV libraries… '+data.Progress+' series checked.':data.ScannedUtc?(data.Series.length?'No series match these filters.':'No TV series found. Add or scan your TV library in Jellyfin, then refresh here.'):'Waiting for the first library scan…';
+    $('saFoot').textContent='Tracking since '+date(data.TrackingStartedUtc)+' · '+(data.Scanning?'Scanning: '+data.Progress+' series checked':'Library refreshed '+date(data.ScannedUtc))+' · Library scan every 6 hours; this view updates every 30 seconds.';
+    $('saRefresh').disabled=data.Scanning;$('saExport').disabled=!rows.length;
+    error([data.Error,data.StorageError].filter(Boolean).join(' '));
+  }
+  async function load(){var mine=++serial;try{var opt=options(),result=await api('Report?inactiveDays='+opt.inactiveDays+'&graceDays='+opt.graceDays);if(mine!==serial||!active)return;data=result;var chosen=savedLibrary===null?$('saLibrary').value:savedLibrary;savedLibrary=null;$('saLibrary').innerHTML='<option value="">All TV libraries</option>'+data.Libraries.map(function(l){return '<option value="'+esc(l.Id)+'">'+esc(l.Name)+'</option>';}).join('');$('saLibrary').value=chosen;render();}catch(e){error(e.message||'Could not load activity. Check your connection and sign in as a Jellyfin administrator.');}finally{clearTimeout(timer);if(active)timer=setTimeout(load,data&&data.Scanning?2000:30000);}}
+  page.addEventListener('pageshow',function(){active=true;try{var saved=JSON.parse(localStorage.getItem('seriesActivity.filters')||'{}');savedLibrary=saved.saLibrary||'';Object.keys(saved).forEach(function(k){if($(k)&&k!=='saLibrary')$(k).value=saved[k];});}catch(e){}load();});
+  page.addEventListener('pagehide',function(){active=false;serial++;clearTimeout(timer);});
+  ['saLibrary','saStatus','saSort','saSearch'].forEach(function(id){$(id).addEventListener(id==='saSearch'?'input':'change',function(){saveFilters();try{render();}catch(e){error(e.message);}});});
+  ['saDays','saGrace'].forEach(function(id){$(id).addEventListener('change',function(){saveFilters();load();});});
+  $('saRefresh').addEventListener('click',async function(){this.disabled=true;try{await api('Refresh','POST');await load();}catch(e){error('Refresh failed. Check your connection and try again.');this.disabled=false;}});
+  $('saRows').addEventListener('change',async function(e){var box=e.target,id=box.getAttribute('data-keep');if(!id)return;box.disabled=true;try{await api('Keep/'+id,'POST',{Keep:box.checked});var row=data.Series.find(function(s){return s.Id===id;});if(row)row.Keep=box.checked;render();}catch(err){box.checked=!box.checked;box.disabled=false;error('Could not save Keep. Please try again.');}});
+  $('saExport').addEventListener('click',function(){var csvCell=function(v){var s=String(v==null?'':v);if(/^[=+@\-\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';};var rows=[['Series','Library','Status','Keep','Last activity UTC','Days inactive','Known episode bytes','Unknown file sizes','Episodes','Viewer activity','Container path']].concat(filtered().map(function(s){return [s.Name,s.Library,s.Status,s.Keep,s.LastActivityUtc,s.DaysInactive,s.KnownBytes,s.UnknownSizes,s.Episodes,s.Viewers.map(function(v){return v.Name+' | '+v.LastActivityUtc+' | '+v.Evidence;}).join('; '),s.Path];}));var blob=new Blob(['\ufeff'+rows.map(function(r){return r.map(csvCell).join(',');}).join('\r\n')],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='series-activity-'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(function(){URL.revokeObjectURL(url);},1000);});
+})();
+</script>
+</div>
+</body></html>

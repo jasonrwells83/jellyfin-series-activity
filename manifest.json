@@ -2,6 +2,14 @@
   {
     "versions": [
       {
+        "version": "1.0.1.0",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/jasonrwells83/jellyfin-series-activity/main/packages/SeriesActivity-1.0.1-Jellyfin-12.1.zip",
+        "checksum": "e04fb99b8427c7a4b783fa0a15fa5703",
+        "timestamp": "2026-10-05T12:00:00Z",
+        "changelog": "Add Series Activity directly to the Dashboard sidebar under Plugins with a TV icon."
+      },
+      {
         "targetAbi": "12.1.0.0",
         "sourceUrl": "https://github.com/jasonrwells83/jellyfin-series-activity/releases/download/v1.0.0/SeriesActivity-1.0.0-Jellyfin-12.1.zip",
         "timestamp": "2026-10-02T00:00:00Z",
