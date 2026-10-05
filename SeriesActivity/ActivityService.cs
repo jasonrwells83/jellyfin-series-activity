@@ -191,10 +191,15 @@ public sealed class ActivityService : BackgroundService
                         }
                     }
                     var uniqueFiles = episodes.GroupBy(e => string.IsNullOrWhiteSpace(e.Path) ? e.Id.ToString() : e.Path, StringComparer.Ordinal).Select(g => g.First()).ToArray();
+                    var latestAired = Rules.LatestAiredEpisode(episodes
+                        .Where(e => e.PremiereDate.HasValue)
+                        .Select(e => new EpisodeAirDate(DateOnly.FromDateTime(e.PremiereDate!.Value),
+                            EpisodeLabel(e), e.ParentIndexNumber, e.IndexNumber)), now);
                     lock (_gate) { _state.Series[show.Id].ExistingHistory = history; _dirty = true; }
                     result.Add(new(show.Id, libraryId, folder.Name, show.Name, show.Path ?? "",
                         episodes.Length, uniqueFiles.Sum(e => Math.Max(0, e.Size ?? 0)),
-                        uniqueFiles.Count(e => !e.Size.HasValue), history));
+                        uniqueFiles.Count(e => !e.Size.HasValue), history,
+                        latestAired, episodes.Count(e => !e.PremiereDate.HasValue)));
                     lock (_gate) _progress++;
                 }
             }
@@ -228,7 +233,8 @@ public sealed class ActivityService : BackgroundService
                 return new SeriesRow(s.Id, s.LibraryId, s.Library, s.Name, s.Path, s.Episodes,
                     s.KnownBytes, s.UnknownSizes, state.FirstSeenUtc, state.Keep, last,
                     last.HasValue ? Math.Max(0, (int)(now - last.Value).TotalDays) : null,
-                    Rules.Status(now, state.FirstSeenUtc, last, inactiveDays, graceDays), viewers);
+                    Rules.Status(now, state.FirstSeenUtc, last, inactiveDays, graceDays), viewers,
+                    s.LatestAiredEpisode, s.MissingAirDates);
             }).ToArray();
             return new(_state.TrackingStartedUtc, _scannedUtc, _scanning || _refresh,
                 _scanError, _storageError, _progress, _libraries, rows);

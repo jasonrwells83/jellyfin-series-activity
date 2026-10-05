@@ -9,11 +9,15 @@ Features: library and status filters, custom inactivity cutoff (default 90 days)
 Add this repository URL in Jellyfin: `https://raw.githubusercontent.com/jasonrwells83/jellyfin-series-activity/main/manifest.json`.
 
 1. In Jellyfin, go to **Dashboard → Plugins → Manage Repositories**, add a repository named **Series Activity**, and paste that URL.
-2. Return to Plugins, choose **Available** or **All**, find **Series Activity**, and install version **1.0.1.0** once it is published. Existing installations can update through the same repository.
+2. Return to Plugins, choose **Available** or **All**, find **Series Activity**, and install version **1.0.2.0**. Existing installations can update through the same repository.
 3. Restart Jellyfin when convenient and reload the browser page.
 4. Open **Dashboard → Series Activity** directly from the left sidebar, under the **Plugins** heading.
 
 Version 1.0.1 adds the dashboard sidebar shortcut with a TV icon. The existing plugin Settings entry still works. Activity history and Keep marks use the same storage and do not need migration.
+
+Version 1.0.2 adds **Latest episode aired** immediately after Last activity, with the air date and episode number/title. It uses the newest episode premiere date in your library, excludes dates after today (UTC), and flags missing dates. Dates are shown as calendar dates without timezone shifts. Same-day releases select the highest season/episode number. The CSV includes these fields too.
+
+Compare the air date to Last activity to spot viewing that ended near a season break. This does not confirm a season finale or whether newer episodes exist outside your library. A future-only or undated library shows **No known aired date**. The activity status continues to describe viewing inactivity; the plugin does not automatically classify a show as awaiting its next season.
 
 ## Manual alternative
 
@@ -54,7 +58,7 @@ The only required installed binary is `Jellyfin.Plugin.SeriesActivity.dll`. Pack
 
 ## Verification
 
-The original activity logic was checked with rule tests and local Jellyfin integration tests. Version 1.0.1 changes only dashboard page registration and assembly version. Verification uses the official Jellyfin 12.1 Docker image with synthetic media and accounts, not the user's Unraid server.
+The original activity logic was checked with rule tests and local Jellyfin integration tests. Version 1.0.2 passes 20 rule checks, plus live checks of episode metadata, future and missing dates, unchanged watch history/Keep marks, and the dashboard shortcut. Verification uses the official Jellyfin 12.1 Docker image with synthetic media and accounts, not the user's Unraid server.
 
 ## License and references
 

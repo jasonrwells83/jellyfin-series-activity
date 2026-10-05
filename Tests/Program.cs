@@ -27,4 +27,18 @@ Check(paused.Seconds == 0, "Paused intervals do not accumulate");
 var gap = new PlaybackClock(now,false);
 Check(!gap.Observe(now.AddMinutes(10),false) && gap.Seconds == 0,"Disconnected sessions do not accumulate wall time");
 Check(!gap.Observe(now.AddMinutes(9),false),"Backward clock does not add activity");
+var today = DateOnly.FromDateTime(now);
+var premiere = new EpisodeAirDate(today.AddDays(-30), "S01 E01", 1, 1);
+var finale = new EpisodeAirDate(today.AddDays(-1), "S01 E10", 1, 10);
+var future = new EpisodeAirDate(today.AddDays(10), "S02 E01", 2, 1);
+Check(Rules.LatestAiredEpisode([future, finale, premiere], now) == finale,
+    "Newest aired date selected across episodes; future season excluded");
+Check(Rules.LatestAiredEpisode([], now) is null, "Missing air dates remain unknown");
+Check(Rules.LatestAiredEpisode([future], now) is null, "Future-only dates are not reported as aired");
+var releaseToday = new EpisodeAirDate(today, "S02 E01", 2, 1);
+Check(Rules.LatestAiredEpisode([premiere, releaseToday], now) == releaseToday,
+    "Calendar date today is included");
+var batchEarlier = finale with { Episode = "S01 E09", EpisodeNumber = 9 };
+Check(Rules.LatestAiredEpisode([batchEarlier, finale], now) == finale,
+    "Same-day batch release picks highest episode number");
 Console.WriteLine($"{count} checks passed");

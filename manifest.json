@@ -2,6 +2,14 @@
   {
     "versions": [
       {
+        "version": "1.0.2.0",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/jasonrwells83/jellyfin-series-activity/main/packages/SeriesActivity-1.0.2-Jellyfin-12.1.zip",
+        "checksum": "c2e6688b256d6b0161d4bd4796290140",
+        "timestamp": "2026-10-05T12:30:00Z",
+        "changelog": "Add Latest episode aired after Last activity, including episode label, missing-date indicators, and CSV fields. Retains dashboard sidebar shortcut."
+      },
+      {
         "version": "1.0.1.0",
         "targetAbi": "12.1.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/jasonrwells83/jellyfin-series-activity/main/packages/SeriesActivity-1.0.1-Jellyfin-12.1.zip",
